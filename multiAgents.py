@@ -74,7 +74,8 @@ class ReflexAgent(Agent):
         # number of moves before ghost is not being scared
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-
+        "*** YOUR CODE HERE ***"
+        # using the current states and the action to evaluate this action
         food = currentGameState.getFood()
         currentPos = list(successorGameState.getPacmanPosition())
         distance = float("-Inf")
