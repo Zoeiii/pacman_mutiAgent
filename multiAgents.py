@@ -154,43 +154,44 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
+
         # taking the agentIndex, depth and gameState
         def minimax(agentIndex, depth, gameState):
             # if state is terminal state, return state's utility
             if gameState.isLose() or gameState.isWin() or depth == self.depth:
-                return self.evaluationFunction
+                return self.evaluationFunction(gameState)
             # if next agent is MAX/pacmam, return max-value
             if agentIndex == 0:
-                return max(minimax(1, depth, gameState.generateSuccessor(agentIndex, newState)) for newState in
-                    gameState.getLegalActions(agentIndex))
-                """
                 v = float("-Inf")
                 for newState in gameState.getLegalActions(agentIndex):
                     # calculate the max value for next agent
-                    v = max(v, (minimax(1, depth, newState)))
+                    v = max(v, (minimax(1, depth, gameState.generateSuccessor(agentIndex, newState))))
                 return v
-                """
+
             # minimize ghosts
             else:
                 nextAgent = agentIndex + 1
                 if gameState.getNumAgents() == nextAgent:
                     nextAgent = 0
                 if nextAgent == 0:
-                   depth += 1
+                    depth += 1
                 v = float("+Inf")
                 for newState in gameState.getLegalActions(agentIndex):
-                    v = min(v, (minimax(nextAgent, depth, newState)))
+                    v = min(v, (minimax(nextAgent, depth, gameState.generateSuccessor(agentIndex, newState))))
                 return v
 
         # the root of the tree
         maximum = float("-inf")
         action = Directions.WEST
+        # for every legalAction, find the best move
         for agentState in gameState.getLegalActions(0):
-            utility = minimax(0, 0, gameState.generateSuccessor(0, agentState))
+            # root of the tree
+            utility = minimax(1, 0, gameState.generateSuccessor(0, agentState))
+            # compare each move's utility and mark down the best move as action
             if utility > maximum or maximum == float("-inf"):
                 maximum = utility
                 action = agentState
-
+        # return the best action
         return action
 
 
@@ -204,7 +205,52 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def minimax(agentIndex, depth, gameState, alpha, beta):
+            # if state is terminal state, return state's utility
+            if gameState.isLose() or gameState.isWin() or depth == self.depth:
+                return self.evaluationFunction(gameState)
+            # if next agent is MAX/pacmam, return max-value
+            if agentIndex == 0:
+                v = float("-Inf")
+                for newState in gameState.getLegalActions(agentIndex):
+                    # calculate the max value for next agent
+                    v = max(v, (minimax(1, depth, gameState.generateSuccessor(agentIndex, newState), alpha, beta)))
+                    if v >= beta:
+                        return v
+                    alpha = max(alpha, v)
+                return v
+
+            # minimize ghosts
+            else:
+                nextAgent = agentIndex + 1
+                if gameState.getNumAgents() == nextAgent:
+                    nextAgent = 0
+                if nextAgent == 0:
+                    depth += 1
+                v = float("+Inf")
+                for newState in gameState.getLegalActions(agentIndex):
+                    v = min(v, (minimax(nextAgent, depth, gameState.generateSuccessor(agentIndex, newState), alpha, beta)))
+                    if v <= alpha:
+                        return v
+                    beta = min(beta, v)
+                return v
+
+        # the root of the tree
+        maximum = float("-inf")
+        action = Directions.WEST
+        alpha = float("-inf")
+        beta = float("inf")
+        # for every legalAction, find the best move
+        for agentState in gameState.getLegalActions(0):
+            # root of the tree
+            utility = minimax(1, 0, gameState.generateSuccessor(0, agentState), alpha, beta)
+            # compare each move's utility and mark down the best move as action
+            if utility > maximum or maximum == float("-inf"):
+                maximum = utility
+                action = agentState
+        # return the best action
+        return action
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
