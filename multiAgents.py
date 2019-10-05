@@ -90,13 +90,12 @@ class ReflexAgent(Agent):
             if state.getPosition() == tuple(currentPos) and (state.scaredTimer == 0):
                 return float("-Inf")
 
-        dis = []
         for x in food:
             # find the best move using manhattan distance between agent and ghost
-            dis.append(-1 * (manhattanDistance(currentPos, x)))
+            distance = max(distance, (-1 * (manhattanDistance(currentPos, x))))
 
         # the larger the number we returned the better the move/action is
-        return max(dis)
+        return distance
 
 
 def scoreEvaluationFunction(currentGameState):
@@ -206,11 +205,14 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
+        # question, why i cannot write >= and <= instead of > and <, equality
+        # maximizer function
         def maxVal(agentIndex, depth, gameState, alpha, beta):
             v = float("-inf")
+            #for each succsor of the state
             for newAction in gameState.getLegalActions(agentIndex):
                 v = max(v, value(1, depth, gameState.generateSuccessor(agentIndex, newAction), alpha, beta))
-                if v >= beta:
+                if v > beta: # if val is greater than beta, we can prune
                     return v
                 alpha = max(alpha, v)
             return v
@@ -218,17 +220,19 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         def minVal(agentIndex, depth, gameState, alpha, beta):
             v = float("inf")
             nextAgent = agentIndex + 1
+            # when it calculates the value of all the agents of the game, we can start a new action/ increase depth
             if nextAgent == gameState.getNumAgents():
                 nextAgent = 0
                 depth += 1
+
             for newAction in gameState.getLegalActions(agentIndex):
                 v = min(v, value(nextAgent, depth, gameState.generateSuccessor(agentIndex, newAction), alpha,beta))
-                if v <= alpha:
+                if v < alpha: # if val is less than alpha, we can prune
                     return v
                 beta = min(beta, v)
 
             return v
-
+        # alpha beta puring function with alpha and beta value init to -inf and +inf
         def value(agentIndex, depth, gameState, alpha, beta):
             if gameState.isWin() or gameState.isLose() or self.depth == depth:
                 return self.evaluationFunction(gameState)
@@ -241,7 +245,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         alpha = float("-inf")
         beta = float("inf")
         utility = float("-inf")
-        action = Directions.WEST
+        action = Directions.EAST
         for newAction in gameState.getLegalActions(0):
             ghostVal = value(1, 0, gameState.generateSuccessor(0, newAction), alpha, beta)
             if ghostVal > utility:
@@ -267,7 +271,45 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # maximizer function
+        def maxVal(agentIndex, depth, gameState):
+            v = float("-inf")
+            # for each succsor of the state
+            for newAction in gameState.getLegalActions(agentIndex):
+                v = max(v, expectimax(1, depth, gameState.generateSuccessor(agentIndex, newAction)))
+            return v
+
+        def expVal(agentIndex, depth, gameState):
+            v = 0
+            nextAgent = agentIndex + 1
+            # when it calculates the value of all the agents of the game, we can start a new action/ increase depth
+            if nextAgent == gameState.getNumAgents():
+                nextAgent = 0
+                depth += 1
+            # return the avg of all the ghost value
+            for newAction in gameState.getLegalActions(agentIndex):
+                v += expectimax(nextAgent, depth, gameState.generateSuccessor(agentIndex, newAction))
+            return v / float(len(gameState.getLegalActions(agentIndex)))
+
+        # alpha beta puring function with alpha and beta value init to -inf and +inf
+        def expectimax(agentIndex, depth, gameState):
+            if gameState.isWin() or gameState.isLose() or self.depth == depth:
+                return self.evaluationFunction(gameState)
+            if agentIndex == 0:  # the pacman
+                return maxVal(agentIndex, depth, gameState)
+            else:
+                return expVal(agentIndex, depth, gameState)
+
+        # calling the root node
+        maximum = float("-inf")
+        action = Directions.WEST
+        for agentState in gameState.getLegalActions(0):
+            utility = expectimax(1, 0, gameState.generateSuccessor(0, agentState))
+            if utility > maximum or maximum == float("-inf"):
+                maximum = utility
+                action = agentState
+
+        return action
 
 
 def betterEvaluationFunction(currentGameState):
