@@ -206,50 +206,51 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        def minimax(agentIndex, depth, gameState, alpha, beta):
-            # if state is terminal state, return state's utility
-            if gameState.isLose() or gameState.isWin() or depth == self.depth:
+        def maxVal(agentIndex, depth, gameState, alpha, beta):
+            v = float("-inf")
+            for newAction in gameState.getLegalActions(agentIndex):
+                v = max(v, value(1, depth, gameState.generateSuccessor(agentIndex, newAction), alpha, beta))
+                if v >= beta:
+                    return v
+                alpha = max(alpha, v)
+            return v
+
+        def minVal(agentIndex, depth, gameState, alpha, beta):
+            v = float("inf")
+            nextAgent = agentIndex + 1
+            if nextAgent == gameState.getNumAgents():
+                nextAgent = 0
+                depth += 1
+            for newAction in gameState.getLegalActions(agentIndex):
+                v = min(v, value(nextAgent, depth, gameState.generateSuccessor(agentIndex, newAction), alpha,beta))
+                if v <= alpha:
+                    return v
+                beta = min(beta, v)
+
+            return v
+
+        def value(agentIndex, depth, gameState, alpha, beta):
+            if gameState.isWin() or gameState.isLose() or self.depth == depth:
                 return self.evaluationFunction(gameState)
-            # if next agent is MAX/pacmam, return max-value
-            if agentIndex == 0:
-                v = float("-Inf")
-                for newState in gameState.getLegalActions(agentIndex):
-                    # calculate the max value for next agent
-                    v = max(v, (minimax(1, depth, gameState.generateSuccessor(agentIndex, newState), alpha, beta)))
-                    if v >= beta:
-                        return v
-                    alpha = max(alpha, v)
-                return v
-
-            # minimize ghosts
+            if agentIndex == 0:  # the pacman
+                return maxVal(agentIndex, depth, gameState, alpha, beta)
             else:
-                nextAgent = agentIndex + 1
-                if gameState.getNumAgents() == nextAgent:
-                    nextAgent = 0
-                if nextAgent == 0:
-                    depth += 1
-                v = float("+Inf")
-                for newState in gameState.getLegalActions(agentIndex):
-                    v = min(v, (minimax(nextAgent, depth, gameState.generateSuccessor(agentIndex, newState), alpha, beta)))
-                    if v <= alpha:
-                        return v
-                    beta = min(beta, v)
-                return v
+                return minVal(agentIndex, depth, gameState, alpha, beta)
 
-        # the root of the tree
-        maximum = float("-inf")
-        action = Directions.WEST
+        # calling the AlphaBeta value function from the root of the tree
         alpha = float("-inf")
         beta = float("inf")
-        # for every legalAction, find the best move
-        for agentState in gameState.getLegalActions(0):
-            # root of the tree
-            utility = minimax(1, 0, gameState.generateSuccessor(0, agentState), alpha, beta)
-            # compare each move's utility and mark down the best move as action
-            if utility > maximum or maximum == float("-inf"):
-                maximum = utility
-                action = agentState
-        # return the best action
+        utility = float("-inf")
+        action = Directions.WEST
+        for newAction in gameState.getLegalActions(0):
+            ghostVal = value(1, 0, gameState.generateSuccessor(0, newAction), alpha, beta)
+            if ghostVal > utility:
+                utility = ghostVal
+                action = newAction
+            if utility > beta:
+                return utility
+            alpha = max(alpha, utility)
+
         return action
 
 
